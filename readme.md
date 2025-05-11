@@ -149,13 +149,39 @@ python app.py
 
 ## 📸 Screenshots
 
-(Include screenshots of key application pages here)
+### Home Page
+![Home Page](Frontend/Screenshots/home_page.png)
+*Landing page showing the main features and navigation of FitFuture*
 
-- Home Page
-- Exercise Evaluation Interface
-- Meal Plan Browser
-- BMI Calculator
-- Calorie Counter
+### Exercise Pages
+![Exercise Selection Page](Frontend/Screenshots/exercise_page_1.png)
+*Browse through different exercise categories and options*
+
+![Exercise Detail Page](Frontend/Screenshots/exercise_page_2.png)
+*Detailed view of exercise categories with instructions*
+
+### Individual Exercise Analysis
+![Individual Exercise](Frontend/Screenshots/individual_excercise.png)
+*Step-by-step guidance for performing specific exercises*
+
+### Posture Analysis
+<div style="display: flex; justify-content: space-between;">
+  <div style="width: 48%;">
+    <img src="Frontend/Screenshots/right_posture.png" alt="Correct Posture" width="100%"/>
+    <p align="center"><em>Correct exercise form detected</em></p>
+  </div>
+  <div style="width: 48%;">
+    <img src="Frontend/Screenshots/wrong_posture.png" alt="Incorrect Posture" width="100%"/>
+    <p align="center"><em>Incorrect exercise form detected with feedback</em></p>
+  </div>
+</div>
+
+### Health Calculators
+![BMI Calculator](Frontend/Screenshots/BMI_calc_page.png)
+*Calculate and track your Body Mass Index*
+
+![Calorie Calculator](Frontend/Screenshots/calorie_calc.png)
+*Track daily caloric intake and expenditure*
 
 ## 👥 Contributing
 
