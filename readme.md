@@ -173,7 +173,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 🙏 Acknowledgments
 
-- Original creators: Diksha Velhal, Abhinav Nair, and Bhumit Mehta
+- Original creators: Abhinav Nair, Diksha Velhal, and Bhumit Mehta
 - Exercise form recognition powered by MediaPipe
 - UI components from shadcn/ui library
 
