@@ -199,10 +199,10 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 🙏 Acknowledgments
 
-- Original creators: Abhinav Nair, Diksha Velhal, and Bhumit Mehta
+- Original creators: Abhinav Nair
 - Exercise form recognition powered by MediaPipe
 - UI components from shadcn/ui library
 
 ---
 
-Built with ❤️ by Abhinav Nair, Diksha Velhal, Bhumit Mehta
+Built with ❤️ by Abhinav Nair
