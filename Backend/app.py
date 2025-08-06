@@ -1,4 +1,4 @@
-from flask import Flask, render_template, Response, request
+from flask import Flask, Response, request
 import cv2
 import mediapipe as mp
 import numpy as np
@@ -22,6 +22,45 @@ def stop():
     running_stream = None
     cv2.destroyAllWindows()
     return "Stopped"
+
+
+# Add these routes to your app.py after the /stop route
+
+@app.route('/')
+def index():
+    return {
+        "message": "AI Fitness Trainer API",
+        "status": "running",
+        "version": "1.0.0",
+        "available_endpoints": {
+            "start_exercise": "/start_exercise?type=1-12",
+            "stop_exercise": "/stop",
+            "health_check": "/health"
+        }
+    }
+
+@app.route('/health')
+def health():
+    return {"status": "healthy", "service": "AI Fitness Trainer API"}
+
+@app.route('/api/exercises')
+def get_exercises():
+    return {
+        "exercises": {
+            "1": "bicep_curl_right",
+            "2": "bicep_curl_left", 
+            "3": "shoulder_press",
+            "4": "pushup",
+            "5": "squats",
+            "6": "lungesleft",
+            "7": "lungesright",
+            "8": "jumping_jack",
+            "9": "high_knees",
+            "10": "situps",
+            "11": "plank",
+            "12": "frog_press"
+        }
+    }
 
 def generate_frames(exercise_type):
     for frame in workout(exercise_type):
