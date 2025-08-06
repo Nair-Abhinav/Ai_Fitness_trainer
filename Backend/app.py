@@ -14,25 +14,7 @@ CORS(app)  # Enable CORS for all routes
 
 # Global variable to control the running state of exercise streams
 running_stream = None
-@app.route('/')
-def index():
-    return render_template('index.html')
-
-@app.route('/exercise1')
-def exercise1():
-    return render_template('exercise1.html')
-
-@app.route('/bmi')
-def bmi():
-    return render_template('bmi.html')
-@app.route('/calorie')
-def calorie():
-    return render_template('calorie.html')
-
-@app.route('/contact')
-def contact():
-    return render_template('contact.html')
-
+# Replace your template routes with these API endpoints
 
 @app.route('/stop')
 def stop():
