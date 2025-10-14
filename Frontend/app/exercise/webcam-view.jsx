@@ -513,45 +513,38 @@ export default function WebcamViewWrapper({ exercise, onClose }) {
 
 function WebcamView({ exercise, onClose }) {
   const [isAnalyzing, setIsAnalyzing] = useState(false)
-  const [score, setScore] = useState(0)
-  const [feedback, setFeedback] = useState("Prepare to start...")
   const [connectionError, setConnectionError] = useState(false)
   const videoRef = useRef(null)
-  const feedbackTimerRef = useRef(null)
   const {backendUrl} = config
 
-  const startAnalysis = () => {
+  const startAnalysis = async () => {
     setIsAnalyzing(true)
-    setFeedback("Connecting to analysis server...")
+    setConnectionError(false)
     
-    feedbackTimerRef.current = setInterval(() => {
-      setScore(prev => Math.min(prev + 2, 100));
-      
-      if (score > 80) {
-        setFeedback("Excellent form! Keep it up!");
-      } else if (score > 50) {
-        setFeedback("Good form, try to maintain proper posture.");
-      } else if (score > 20) {
-        setFeedback("Focus on your form and alignment.");
+    // First check if backend is reachable
+    try {
+      const healthCheck = await fetch(`${backendUrl}/health`)
+      if (!healthCheck.ok) {
+        throw new Error('Backend server is not responding')
       }
-    }, 1000);
+    } catch (err) {
+      console.error('Backend health check failed:', err)
+      setConnectionError(true)
+      setIsAnalyzing(false)
+      return
+    }
   }
 
   const stopAnalysis = () => {
     setIsAnalyzing(false)
     
-    if (feedbackTimerRef.current) {
-      clearInterval(feedbackTimerRef.current);
-    }
-    
     fetch(`${backendUrl}/stop`)
       .then(response => {
         if (!response.ok) throw new Error('Failed to stop exercise');
-        setFeedback("Exercise stopped. Click start to begin a new session.");
       })
       .catch(err => {
         console.error("Error stopping exercise:", err);
-        setFeedback("Connection error. Please try again.");
+        setConnectionError(true)
       });
   }
 
@@ -562,19 +555,11 @@ function WebcamView({ exercise, onClose }) {
       videoRef.current.src = `${backendUrl}/start_exercise?type=${exercise.id}`;
       videoRef.current.onerror = () => {
         setConnectionError(true);
-        setFeedback("Error connecting to analysis server. Please try again.");
         setIsAnalyzing(false);
-        if (feedbackTimerRef.current) {
-          clearInterval(feedbackTimerRef.current);
-        }
       };
     }
 
     return () => {
-      if (feedbackTimerRef.current) {
-        clearInterval(feedbackTimerRef.current);
-      }
-      
       fetch(`${backendUrl}/stop`).catch(err => 
         console.error("Error stopping exercise on cleanup:", err)
       );
@@ -607,8 +592,12 @@ function WebcamView({ exercise, onClose }) {
 
             <div className="relative aspect-video bg-black/30 rounded-lg overflow-hidden mb-3">
               {connectionError ? (
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-white/70 text-sm">
-                  <div className="mb-2">Connection to analysis server failed.</div>
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-white/70 text-sm p-4 text-center">
+                  <div className="mb-3 text-red-400 font-semibold">Connection Failed</div>
+                  <div className="mb-2 text-xs">Make sure the Flask backend is running:</div>
+                  <div className="mb-3 text-xs font-mono bg-black/40 p-2 rounded">
+                    cd Backend && python app.py
+                  </div>
                   <Button 
                     onClick={() => {
                       setConnectionError(false);
@@ -617,7 +606,7 @@ function WebcamView({ exercise, onClose }) {
                     variant="outline"
                     size="sm"
                   >
-                    <RefreshCw className="mr-1 h-3 w-3" /> Retry
+                    <RefreshCw className="mr-1 h-3 w-3" /> Retry Connection
                   </Button>
                 </div>
               ) : (
@@ -629,28 +618,11 @@ function WebcamView({ exercise, onClose }) {
               )}
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
-              <GlassCard className="p-2 sm:p-3">
-                <h3 className="text-xs font-medium text-white/70 mb-0.5">Score</h3>
-                <div className="text-xl sm:text-2xl font-bold">
-                  {score.toFixed(0)}
-                  <span className="text-sm text-white/50">/100</span>
-                </div>
-              </GlassCard>
-
-              <GlassCard className="p-2 sm:p-3 sm:col-span-2">
-                <h3 className="text-xs font-medium text-white/70 mb-0.5">Feedback</h3>
-                <div className="text-sm sm:text-base font-medium">{feedback}</div>
-              </GlassCard>
-            </div>
-
-            <div className="relative w-full h-2 sm:h-3 bg-white/10 rounded-full overflow-hidden mb-3">
-              <motion.div
-                className="absolute top-0 left-0 h-full bg-gradient-to-r from-cyan-500 to-purple-500"
-                initial={{ width: "0%" }}
-                animate={{ width: `${score}%` }}
-                transition={{ duration: 0.5 }}
-              />
+            {/* Real-time feedback is shown directly on the video feed from the backend */}
+            <div className="text-center mb-3">
+              <p className="text-white/60 text-xs">
+                Real-time posture feedback and rep counting is shown on the video above
+              </p>
             </div>
 
             <div className="flex justify-center">

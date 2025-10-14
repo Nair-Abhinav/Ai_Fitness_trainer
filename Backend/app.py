@@ -1,4 +1,4 @@
-from flask import Flask, Response, request
+from flask import Flask, Response, request, jsonify
 import cv2
 import mediapipe as mp
 import numpy as np
@@ -14,14 +14,22 @@ CORS(app)  # Enable CORS for all routes
 
 # Global variable to control the running state of exercise streams
 running_stream = None
-# Replace your template routes with these API endpoints
+active_cap = None
 
 @app.route('/stop')
 def stop():
-    global running_stream
+    global running_stream, active_cap
     running_stream = None
-    cv2.destroyAllWindows()
-    return "Stopped"
+    
+    # Release camera instead of destroying windows (which doesn't work with headless OpenCV)
+    if active_cap is not None:
+        try:
+            active_cap.release()
+        except Exception as e:
+            print(f"Error releasing camera: {e}")
+        active_cap = None
+    
+    return jsonify({"status": "stopped", "message": "Exercise stopped successfully"}), 200
 
 
 # Add these routes to your app.py after the /stop route
@@ -63,21 +71,36 @@ def get_exercises():
     }
 
 def generate_frames(exercise_type):
-    for frame in workout(exercise_type):
-        yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+    global running_stream
+    running_stream = exercise_type
+    try:
+        for frame in workout(exercise_type):
+            if not running_stream:
+                break
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+    except Exception as e:
+        print(f"Error in generate_frames: {e}")
+    finally:
+        running_stream = None
 
 @app.route('/start_exercise')
 def exerciseestimator():
-    global running_stream
-    exercise_type = int(request.args.get('type'))
-    
-    if exercise_type in range(1,12):
-        running_stream = exercise_type
-    else:
-        return "Invalid exercise type", 400
-    
-    return Response(generate_frames(exercise_type), mimetype='multipart/x-mixed-replace; boundary=frame')
+    try:
+        exercise_type = int(request.args.get('type', 1))
+        
+        if exercise_type < 1 or exercise_type > 12:
+            return jsonify({"error": "Invalid exercise type. Must be between 1 and 12"}), 400
+        
+        # Return video stream response
+        return Response(
+            generate_frames(exercise_type),
+            mimetype='multipart/x-mixed-replace; boundary=frame'
+        )
+    except ValueError:
+        return jsonify({"error": "Invalid exercise type parameter"}), 400
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 def get_frame_for_exercise(exercise_type):
     return next(workout(exercise_type))
@@ -135,11 +158,27 @@ def buzzer():
     threading.Thread(target=lambda: play_sound(audio_file)).start()
 
 def workout(exercise_type):
+    global active_cap, running_stream
     mp_drawing = mp.solutions.drawing_utils
     mp_pose = mp.solutions.pose
     target_width = 1080 # Set desired width
     target_height = 620
-    cap = cv2.VideoCapture(0)
+    
+    # Release any existing camera
+    if active_cap is not None:
+        try:
+            active_cap.release()
+        except:
+            pass
+    
+    active_cap = cv2.VideoCapture(0)
+    cap = active_cap
+    
+    # Check if camera opened successfully
+    if not cap.isOpened():
+        print("Error: Could not open camera")
+        yield b''
+        return
    
     counter = 0 
     stage = None
@@ -187,9 +226,10 @@ def workout(exercise_type):
         )
     
     with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as pose:
-        while cap.isOpened() and running_stream == exercise_type:
+        while cap.isOpened() and running_stream:
             ret, frame = cap.read()
             if not ret:
+                print("Error: Failed to capture frame")
                 break
             frame = cv2.resize(frame, (target_width, target_height))
             image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -397,11 +437,21 @@ def workout(exercise_type):
                 display(stage, counter)
             
             ret, buffer = cv2.imencode('.jpg', image)
+            if not ret:
+                continue
+                
             frame = buffer.tobytes()
             yield frame
 
-        cap.release()
-        cv2.destroyAllWindows()
+    # Clean up
+    if cap is not None:
+        try:
+            cap.release()
+        except Exception as e:
+            print(f"Error releasing camera in workout: {e}")
+    
+    if active_cap is not None:
+        active_cap = None
 
 if __name__ == "__main__":
-    app.run(debug=True, port=8080,host='0.0.0.0')
+    app.run(debug=True, port=8080, host='0.0.0.0')
