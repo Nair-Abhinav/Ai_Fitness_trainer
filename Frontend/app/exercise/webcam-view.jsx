@@ -528,7 +528,8 @@ function WebcamView({ exercise, onClose }) {
         throw new Error('Backend server is not responding')
       }
     } catch (err) {
-      console.error('Backend health check failed:', err)
+      // Use debug to avoid alarming end users with red error overlay during demos
+      console.debug('Backend health check failed:', err)
       setConnectionError(true)
       setIsAnalyzing(false)
       return
@@ -543,7 +544,7 @@ function WebcamView({ exercise, onClose }) {
         if (!response.ok) throw new Error('Failed to stop exercise');
       })
       .catch(err => {
-        console.error("Error stopping exercise:", err);
+        console.debug("Error stopping exercise:", err);
         setConnectionError(true)
       });
   }
@@ -561,7 +562,7 @@ function WebcamView({ exercise, onClose }) {
 
     return () => {
       fetch(`${backendUrl}/stop`).catch(err => 
-        console.error("Error stopping exercise on cleanup:", err)
+        console.debug("Error stopping exercise on cleanup:", err)
       );
     };
   }, [isAnalyzing, exercise.id, backendUrl]);

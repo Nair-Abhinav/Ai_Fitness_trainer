@@ -1,6 +1,10 @@
+// Prefer env var, fall back to 127.0.0.1 for reliability on Windows
+const BACKEND_DEFAULT = "http://127.0.0.1:8080";
+
 const config = {
-    // backendUrl: "https://ai-fitness-trainer-e834.onrender.com", // Update with your actual backend URL
-    backendUrl: "http://localhost:8080", // Update with your actual backend URL
-  };
-  
+  backendUrl:
+    // Next.js exposes env vars prefixed with NEXT_PUBLIC_ to the browser
+    (typeof process !== "undefined" && process.env?.NEXT_PUBLIC_BACKEND_URL) || BACKEND_DEFAULT,
+};
+
 export default config;
